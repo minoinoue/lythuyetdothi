@@ -1,72 +1,49 @@
-class DoThi:
-    def __init__(self, kich_thuoc):
-        # Khởi tạo ma trận kề với kích thước cho trước
-        self.ma_tran_ke = [[0] * kich_thuoc for _ in range(kich_thuoc)]
-        self.kich_thuoc = kich_thuoc
-        self.du_lieu_dinh = [''] * kich_thuoc
+import sys
+import heapq
 
-    def them_canh(self, u, v, trong_so):
-        if 0 <= u < self.kich_thuoc and 0 <= v < self.kich_thuoc:
-            self.ma_tran_ke[u][v] = trong_so
-            self.ma_tran_ke[v][u] = trong_so  # Đồ thị vô hướng
+# Đặt giá trị vô cùng lớn cho khoảng cách
+INF = 10**18
+MaxN = 101
 
-    def them_du_lieu_dinh(self, dinh, du_lieu):
-        if 0 <= dinh < self.kich_thuoc:
-            self.du_lieu_dinh[dinh] = du_lieu
+# Nhập số lượng đỉnh, cạnh và điểm xuất phát
+n, m, s = map(int, input("Nhập số đỉnh, số cạnh, điểm xuất phát: ").split())
 
-    def dijkstra(self, du_lieu_dinh_bat_dau):
-        dinh_bat_dau = self.du_lieu_dinh.index(du_lieu_dinh_bat_dau)
-        khoang_cach = [float('inf')] * self.kich_thuoc
-        khoang_cach[dinh_bat_dau] = 0
-        da_duyet = [False] * self.kich_thuoc
+# Khởi tạo danh sách kề và mảng khoảng cách
+dsc = [[] for _ in range(MaxN)]  # Danh sách kề
+khoang_cach = [INF] * MaxN      # Mảng khoảng cách
+danh_dau = [False] * MaxN       # Mảng đánh dấu
 
-        for _ in range(self.kich_thuoc):
-            khoang_cach_min = float('inf')
-            u = None
-            for i in range(self.kich_thuoc):
-                if not da_duyet[i] and khoang_cach[i] < khoang_cach_min:
-                    khoang_cach_min = khoang_cach[i]
-                    u = i
+# Đọc các cạnh
+for i in range(m):
+    u, v, w = map(int, input(f"Nhập cạnh thứ {i+1} theo dạng u v w (với u và v là đỉnh, w là trọng số): ").split())
+    dsc[u].append((v, w))
 
-            if u is None:
-                break
+# Hàm Dijkstra để tìm khoảng cách từ điểm xuất phát
+def Dijkstra(s):
+    khoang_cach[s] = 0
+    pq = []
+    heapq.heappush(pq, (0, s))
 
-            da_duyet[u] = True
+    while pq:
+        d, v = heapq.heappop(pq)
+        
+        if danh_dau[v]:
+            continue
+        danh_dau[v] = True
+        
+        for u, w in dsc[v]:
+            if not danh_dau[u] and khoang_cach[u] > khoang_cach[v] + w:
+                khoang_cach[u] = khoang_cach[v] + w
+                heapq.heappush(pq, (khoang_cach[u], u))
 
-            for v in range(self.kich_thuoc):
-                if self.ma_tran_ke[u][v] != 0 and not da_duyet[v]:
-                    alt = khoang_cach[u] + self.ma_tran_ke[u][v]
-                    if alt < khoang_cach[v]:
-                        khoang_cach[v] = alt
+# Chạy thuật toán Dijkstra từ nút s
+Dijkstra(s)
 
-        return khoang_cach
+# Xuất kết quả
+print("\nKhoảng cách từ đỉnh", s, "đến tất cả các đỉnh còn lại:")
+for i in range(1, n + 1):
+    if khoang_cach[i] == INF:
+        print(f"Đỉnh {i}: -1 (không thể đến được)")
+    else:
+        print(f"Đỉnh {i}: {khoang_cach[i]}")
 
-# Tạo đồ thị với 7 đỉnh
-do_thi = DoThi(7)
-
-# Thêm dữ liệu cho các đỉnh
-do_thi.them_du_lieu_dinh(0, 'A')
-do_thi.them_du_lieu_dinh(1, 'B')
-do_thi.them_du_lieu_dinh(2, 'C')
-do_thi.them_du_lieu_dinh(3, 'D')
-do_thi.them_du_lieu_dinh(4, 'E')
-do_thi.them_du_lieu_dinh(5, 'F')
-do_thi.them_du_lieu_dinh(6, 'G')
-
-# Thêm các cạnh và trọng số
-do_thi.them_canh(3, 0, 4)  # D - A, trọng số 4
-do_thi.them_canh(3, 4, 2)  # D - E, trọng số 2
-do_thi.them_canh(0, 2, 3)  # A - C, trọng số 3
-do_thi.them_canh(0, 4, 4)  # A - E, trọng số 4
-do_thi.them_canh(4, 2, 4)  # E - C, trọng số 4
-do_thi.them_canh(4, 6, 5)  # E - G, trọng số 5
-do_thi.them_canh(2, 5, 5)  # C - F, trọng số 5
-do_thi.them_canh(2, 1, 2)  # C - B, trọng số 2
-do_thi.them_canh(1, 5, 2)  # B - F, trọng số 2
-do_thi.them_canh(6, 5, 5)  # G - F, trọng số 5
-
-# Chạy thuật toán Dijkstra từ đỉnh D đến tất cả các đỉnh
-print("\nThuật toán Dijkstra bắt đầu từ đỉnh D:")
-khoang_cach = do_thi.dijkstra('D')
-for i, d in enumerate(khoang_cach):
-    print(f"Khoảng cách từ D đến {do_thi.du_lieu_dinh[i]}: {d}")
